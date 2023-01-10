@@ -103,6 +103,14 @@ namespace SrcChess2 {
             } else if (radioButtonComputerAgainstComputer.IsChecked == true) {
                 m_parentWindow!.PlayingMode = MainWindow.MainPlayingMode.ComputerPlayBoth;
             }
+            if (checkBoxChess960.IsChecked == true)
+            {
+                m_parentWindow.m_chessCtl.Board.chess960 = true;
+            }
+            else
+            {
+                m_parentWindow.m_chessCtl.Board.chess960 = false;
+            }
             DialogResult = true;
             Close();
         }
@@ -173,5 +181,9 @@ namespace SrcChess2 {
             return retVal;
         }
 
+        private void butCancel_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     } // Class FrmGameParameter
 } // Namespace

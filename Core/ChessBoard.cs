@@ -14,6 +14,9 @@ namespace SrcChess2.Core {
     /// </summary>
     public sealed class ChessBoard : ISearchTrace<Move>, IXmlSerializable {
 
+        // should chess960 board setup be used when generating the homerow
+        public bool chess960;
+
         /// <summary>Player color (black and white)</summary>
         public enum PlayerColor {
             /// <summary>White player</summary>
@@ -612,7 +615,22 @@ namespace SrcChess2.Core {
         /// <summary>
         /// Reset the board to the initial configuration
         /// </summary>
+        /// 
+        /// <summary>Chess board</summary>
+        ///     A  B  C  D  E  F  G  H
+        ///   ---------------------------
+        /// 8 | 63 62 61 60 59 58 57 56 | 8
+        /// 7 | 55 54 53 52 51 50 49 48 | 7
+        /// 6 | 47 46 45 44 43 42 41 40 | 6
+        /// 5 | 39 38 37 36 35 34 33 32 | 5
+        /// 4 | 31 30 29 28 27 26 25 24 | 4
+        /// 3 | 23 22 21 20 19 18 17 16 | 3
+        /// 2 | 15 14 13 12 11 10 9  8  | 2
+        /// 1 | 7  6  5  4  3  2  1  0  | 1
+        ///   ---------------------------
+        ///     A  B  C  D  E  F  G  H
         public void ResetBoard() {
+            
             for (int i = 0; i < 64; i++) {
                 m_board[i] = PieceType.None;
             }
@@ -620,26 +638,195 @@ namespace SrcChess2.Core {
                 m_board[8+i]  = PieceType.Pawn | PieceType.White;
                 m_board[48+i] = PieceType.Pawn | PieceType.Black;
             }
-            m_board[0]     = PieceType.Rook   | PieceType.White;
-            m_board[7*8]   = PieceType.Rook   | PieceType.Black;
-            m_board[7]     = PieceType.Rook   | PieceType.White;
-            m_board[7*8+7] = PieceType.Rook   | PieceType.Black;
-            m_board[1]     = PieceType.Knight | PieceType.White;
-            m_board[7*8+1] = PieceType.Knight | PieceType.Black;
-            m_board[6]     = PieceType.Knight | PieceType.White;
-            m_board[7*8+6] = PieceType.Knight | PieceType.Black;
-            m_board[2]     = PieceType.Bishop | PieceType.White;
-            m_board[7*8+2] = PieceType.Bishop | PieceType.Black;
-            m_board[5]     = PieceType.Bishop | PieceType.White;
-            m_board[7*8+5] = PieceType.Bishop | PieceType.Black;
-            m_board[3]     = PieceType.King   | PieceType.White;
-            m_board[7*8+3] = PieceType.King   | PieceType.Black;
-            m_board[4]     = PieceType.Queen  | PieceType.White;
-            m_board[7*8+4] = PieceType.Queen  | PieceType.Black;
+            if (chess960)
+            {
+                Random rand = new Random();
+
+                int boardPos = rand.Next(1,7);
+                int kingPos = boardPos;
+                m_board[boardPos] = PieceType.King | PieceType.White;
+                m_board[boardPos + 56] = PieceType.King | PieceType.Black;
+                PlaceRooks(boardPos);
+
+                boardPos = FindEmptySpot();
+                PlaceBishops(boardPos);
+
+                boardPos = FindEmptySpot();
+                m_board[boardPos] = PieceType.Queen | PieceType.White;
+                m_board[boardPos + 56] = PieceType.Queen | PieceType.Black;
+
+                for (int i = 0; i < 8; i++)
+                {
+                    if (m_board[i] == PieceType.None)
+                    {
+                        m_board[i] = PieceType.Knight | PieceType.White;
+                        m_board[i + 56] = PieceType.Knight | PieceType.Black;
+                    }
+                }
+
+                
+            }
+            else
+            {
+                m_board[0]     = PieceType.Rook   | PieceType.White;
+                m_board[7*8]   = PieceType.Rook   | PieceType.Black;
+                m_board[7]     = PieceType.Rook   | PieceType.White;
+                m_board[7*8+7] = PieceType.Rook   | PieceType.Black;
+                m_board[1]     = PieceType.Knight | PieceType.White;
+                m_board[7*8+1] = PieceType.Knight | PieceType.Black;
+                m_board[6]     = PieceType.Knight | PieceType.White;
+                m_board[7*8+6] = PieceType.Knight | PieceType.Black;
+                m_board[2]     = PieceType.Bishop | PieceType.White;
+                m_board[7*8+2] = PieceType.Bishop | PieceType.Black;
+                m_board[5]     = PieceType.Bishop | PieceType.White;
+                m_board[7*8+5] = PieceType.Bishop | PieceType.Black;
+                m_board[3]     = PieceType.King   | PieceType.White;
+                m_board[7*8+3] = PieceType.King   | PieceType.Black;
+                m_board[4]     = PieceType.Queen  | PieceType.White;
+                m_board[7*8+4] = PieceType.Queen  | PieceType.Black;
+            }
+           
             ResetInitialBoardInfo(PlayerColor.White,
                                   isStdBoard: true,
                                   BoardStateMask.BLCastling | BoardStateMask.BRCastling | BoardStateMask.WLCastling | BoardStateMask.WRCastling,
                                   enPassantPos: 0);
+        }
+
+        private void PlaceBishops(int boardPos)
+        {
+            m_board[boardPos] = PieceType.Bishop | PieceType.White;
+            m_board[boardPos + 56] = PieceType.Bishop | PieceType.Black;
+
+            if (boardPos % 2 == 0)
+            {
+                bool invalidPos = true;
+                while (invalidPos)
+                {
+                    boardPos = OddNum(0, 7);
+                    if(m_board[boardPos] == PieceType.None) invalidPos = false;
+                }
+
+                m_board[boardPos] = PieceType.Bishop | PieceType.White;
+                m_board[boardPos + 56] = PieceType.Bishop | PieceType.Black;
+            }
+            else
+            {
+                bool invalidPos = true;
+                while (invalidPos)
+                {
+                    boardPos = EvenNum(0, 7);
+                    if (m_board[boardPos] == PieceType.None) invalidPos = false;
+                }
+
+                m_board[boardPos] = PieceType.Bishop | PieceType.White;
+                m_board[boardPos + 56] = PieceType.Bishop | PieceType.Black;
+            }
+        }
+
+        private void PlaceRooks(int kingPos)
+        {
+            Random rand = new Random();
+
+            int boardPos = rand.Next(0, kingPos);
+            m_board[boardPos] = PieceType.Rook | PieceType.White;
+            m_board[boardPos + 56] = PieceType.Rook | PieceType.Black;
+            
+            boardPos = rand.Next(kingPos + 1, 8);
+            m_board[boardPos] = PieceType.Rook | PieceType.White;
+            m_board[boardPos + 56] = PieceType.Rook | PieceType.Black;
+            
+        }
+
+        private int EvenNum(int min, int max)
+        {
+            Random rand = new Random(); 
+            int num = rand.Next(min, max + 1);
+            //check if num is even
+            if (num % 2 == 0)
+            {
+                return num;
+            }
+            else
+            {
+                //if not even, increment by 1
+                num++;
+            }
+
+            //check if num is greater than max
+            if (num > max)
+            {
+                //check if min is even
+                if (min % 2 == 0)
+                {
+                    //if yes, set num to min
+                    num = min;
+                }
+                else
+                {
+                    //if not, set num to 1 more than min
+                    num = min + 1;
+                }
+
+                return num;
+            }
+            else
+            {
+                //if min is not greater than max, return num
+                return num;
+            }
+        }
+
+        private int OddNum(int min, int max)
+        {
+            Random rand = new Random();
+            int num = rand.Next(min, max + 1);
+            //check if num is odd
+            if (num % 2 == 1)
+            {
+                return num;
+            }
+            else
+            {
+                //if not even, decrement by 1
+                num--;
+            }
+
+            //check if num is less than min
+            if (num < min)
+            {
+                //check if max is odd
+                if (max % 2 == 1)
+                {
+                    //if yes, set num to max
+                    num = max;
+                }
+                else
+                {
+                    //if not, set num to 1 less than max
+                    num = max + 1;
+                }
+
+                return num;
+            }
+            else
+            {
+                //if min is not less than min, return num
+                return num;
+            }
+        }
+
+        private int FindEmptySpot()
+        {
+            Random rand = new Random();
+            int boardPos = 0;
+            bool invalidPos = true;
+            while (invalidPos)
+            {
+                boardPos = rand.Next(0, 8);
+                if (m_board[boardPos] == PieceType.None) return boardPos;
+            }
+
+            return 0;
         }
 
         /// <summary>

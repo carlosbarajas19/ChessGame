@@ -1,7 +1,7 @@
 ﻿<Window x:Class="SrcChess2.FrmGameParameter"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Game Parameters" Height="320" Width="493" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
+        Title="Game Parameters" Height="350" Width="493" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
     <DockPanel HorizontalAlignment="Stretch" Margin="0" Name="dockPanel1" VerticalAlignment="Stretch">
         <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
             <GroupBox Header="Difficulty Level" Margin="10">
@@ -28,12 +28,17 @@
                     <RadioButton Content="Computer Against C_omputer" Height="16" Name="radioButtonComputerAgainstComputer" Margin="5" Checked="RadioButtonOpponent_CheckedChanged" Unchecked="RadioButtonOpponent_CheckedChanged" />
                 </StackPanel>
             </GroupBox>
-            <GroupBox Header="Computer Plays" Name="groupBoxComputerPlay" Margin="10">
-                <StackPanel Name="stackPanel2" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
-                    <RadioButton Content="_White" Height="16" Name="radioButtonComputerPlayWhite" Margin="5" />
-                    <RadioButton Content="_Black" Height="16" Name="radioButtonComputerPlayBlack" Margin="5" />
-                </StackPanel>
-            </GroupBox>
+            <StackPanel Margin="10">
+                <GroupBox Header="Computer Plays" Name="groupBoxComputerPlay" Margin="5,5,5,0">
+                    <StackPanel Name="stackPanel2" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0">
+                        <RadioButton Content="_White" Height="16" Name="radioButtonComputerPlayWhite" Margin="5" />
+                        <RadioButton Content="_Black" Height="16" Name="radioButtonComputerPlayBlack" Margin="5" />
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="Chess960" x:Name="groupBoxChess960_Copy" Margin="0">
+                    <CheckBox Content="Enabled" Height="16" x:Name="checkBoxChess960" Margin="5" />
+                </GroupBox>
+            </StackPanel>
         </UniformGrid>
     </DockPanel>
 </Window>
